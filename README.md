@@ -1,16 +1,28 @@
-# mapcard
+# Map Card
 
-A new Flutter project.
+A Case Study to show a Google Maps Card
 
-## Getting Started
+## Media
 
-This project is a starting point for a Flutter application.
+### <pre>Left - Task          Right - My build</pre>
 
-A few resources to get you started if this is your first Flutter project:
+<image src = './assets/Task.png' width = "200px" height = "445px" alt = 'Task'></image>
+<image src = './assets/actual.jpg' width = "200px" alt = 'Actual'></image>
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Original image of Task (above is stretched to match the phone)
+### Task - Pixel 4 My Build - One Plus 9 Pro
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<image src = './assets/Task.png' width = "200px" alt = 'Task'></image>
+
+## Description
+
+This Project's goal is to showcase use of the Google Maps Api by
+creating a Google Maps Activity, where the user starts at his own
+location, then, by pressing on 'take me somewhere random', the
+user will be taken somewhere random on earth, with within-app
+customizable precision (default 10^4). If the user clicks on
+'take me home' they will be redirected to their starting location.
+Another task is for all the visited places to be recorded for the
+lifecycle of the app with precision of an integer.
+
+[case study link](https://www.figma.com/file/4uHSpIMF7ggbMw2cU80Qmh/Front-End-case-study)
