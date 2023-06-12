@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'map_card.dart';
+import 'package:mapcard/map_card.dart';
 
 void main() {
   runApp(const MyApp());
