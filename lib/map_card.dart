@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+// default text style on dark background
 const TextStyle myStyle = TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold);
 
-// modifiable
+// modifiable values for different experience
 final num randomnessPrecision = pow(10, 3);
 const double mapZoom = 15;
 
@@ -19,14 +20,21 @@ class MapCard extends StatefulWidget {
 }
 
 class _MapCardState extends State<MapCard> {
+  // Google maps vars
   late final Completer<GoogleMapController> _controller;
   late CameraPosition initialPosition;
-  bool dialogIsHidden = true;
-  bool isReady = false;
-  double long = 0;
-  double lat = 0;
 
+  // to track if the google map has been initialized
+  bool isReady = false;
+
+  // to track if the dialog is shown or hidden
+  bool dialogIsHidden = true;
+
+  // To track current and past locations
   List<LatLng> previousLocations = [];
+  double currentLong = 0;
+  double currentLat = 0;
+
 
   @override
   void initState() {
@@ -87,7 +95,7 @@ class _MapCardState extends State<MapCard> {
         Marker(
           markerId: const MarkerId("object"),
           icon: BitmapDescriptor.defaultMarker,
-          position: LatLng(lat, long),
+          position: LatLng(currentLat, currentLong),
         )
       },
     );
@@ -176,13 +184,13 @@ class _MapCardState extends State<MapCard> {
             ),
           ),
           Text(
-            'Latitude :${lat.toStringAsFixed(0)}',
+            'Latitude :${currentLat.toStringAsFixed(0)}',
             style: myStyle,
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: Text(
-              'Longitude :${long.toStringAsFixed(0)}',
+              'Longitude :${currentLong.toStringAsFixed(0)}',
               style: myStyle,
             ),
           ),
@@ -213,8 +221,8 @@ class _MapCardState extends State<MapCard> {
     );
   }
 
-  Widget closeGreyBoxButton(){
-    return  Container(
+  Widget closeGreyBoxButton() {
+    return Container(
       height: 50,
       width: 50,
       decoration: const BoxDecoration(
@@ -234,11 +242,11 @@ class _MapCardState extends State<MapCard> {
 
   // Functions
 
-  void setMapToMyLocation() async {
+  Future<void> setMapToMyLocation() async {
     final Position myLocation = await locate();
     setState(() {
-      lat = myLocation.latitude;
-      long = myLocation.longitude;
+      currentLat = myLocation.latitude;
+      currentLong = myLocation.longitude;
       initialPosition = CameraPosition(
         target: LatLng(myLocation.latitude, myLocation.longitude),
         zoom: mapZoom,
@@ -251,8 +259,8 @@ class _MapCardState extends State<MapCard> {
     final GoogleMapController controller = await _controller.future;
     final Position myLocation = await locate();
     setState(() {
-      lat = myLocation.latitude;
-      long = myLocation.longitude;
+      currentLat = myLocation.latitude;
+      currentLong = myLocation.longitude;
       initialPosition = CameraPosition(
         target: LatLng(myLocation.latitude, myLocation.longitude),
         zoom: mapZoom,
@@ -268,22 +276,22 @@ class _MapCardState extends State<MapCard> {
         ),
       ),
     );
-    previousLocations.add(LatLng(lat, long));
+    previousLocations.add(LatLng(currentLat, currentLong));
   }
 
   Future<void> toRandom() async {
     final GoogleMapController controller = await _controller.future;
 
     setState(() {
-      lat = randomLat;
-      long = randomLong;
+      currentLat = randomLat;
+      currentLong = randomLong;
     });
-    previousLocations.add(LatLng(lat, long));
+    previousLocations.add(LatLng(currentLat, currentLong));
 
     controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
-          target: LatLng(lat, long),
+          target: LatLng(currentLat, currentLong),
           zoom: mapZoom,
         ),
       ),
