@@ -16,10 +16,10 @@ class MapCard extends StatefulWidget {
   const MapCard({Key? key}) : super(key: key);
 
   @override
-  State<MapCard> createState() => _MapCardState();
+  State<MapPage> createState() => _MapPageState();
 }
 
-class _MapCardState extends State<MapCard> {
+class _MapPageState extends State<MapPage> {
   // Google maps vars
   late final Completer<GoogleMapController> _controller;
   late CameraPosition initialPosition;
@@ -49,36 +49,38 @@ class _MapCardState extends State<MapCard> {
     return Scaffold(
       body: !isReady
           ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                mapCard(),
-                Positioned(
-                  bottom: 10,
-                  left: 75,
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width - 150,
-                    child: Column(
-                      children: [
-                        toRandomButton(),
-                        toMeButton(),
-                      ],
+          : SafeArea(
+            child: Stack(
+                children: [
+                  mapCard(),
+                  Positioned(
+                    bottom: 10,
+                    left: 75,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width - 150,
+                      child: Column(
+                        children: [
+                          toRandomButton(),
+                          toMeButton(),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                if (!dialogIsHidden) ...[
-                  Positioned(
-                    left: 60,
-                    top: 100,
-                    child: greyBoxWidget(),
-                  ),
-                  Positioned(
-                    right: 80 - 50 + 10,
-                    top: 100 - 35 + 10,
-                    child: closeGreyBoxButton(),
-                  )
-                ]
-              ],
-            ),
+                  if (!dialogIsHidden) ...[
+                    Positioned(
+                      left: 60,
+                      top: 100,
+                      child: greyBoxWidget(),
+                    ),
+                    Positioned(
+                      right: 80 - 50 + 10,
+                      top: 100 - 35 + 10,
+                      child: closeGreyBoxButton(),
+                    )
+                  ]
+                ],
+              ),
+          ),
     );
   }
 
