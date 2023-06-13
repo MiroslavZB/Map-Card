@@ -3,7 +3,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:mapcard/controller.dart';
 
 // default text style on dark background
 const TextStyle myStyle = TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold);
@@ -12,8 +14,8 @@ const TextStyle myStyle = TextStyle(fontSize: 20, color: Colors.white, fontWeigh
 final num randomnessPrecision = pow(10, 3);
 const double mapZoom = 15;
 
-class MapCard extends StatefulWidget {
-  const MapCard({Key? key}) : super(key: key);
+class MapPage extends StatefulWidget {
+  const MapPage({Key? key}) : super(key: key);
 
   @override
   State<MapPage> createState() => _MapPageState();
@@ -21,85 +23,82 @@ class MapCard extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   // Google maps vars
-  late final Completer<GoogleMapController> _controller;
-  late CameraPosition initialPosition;
+  late final Completer<GoogleMapController> _mapController;
+  late Rx<CameraPosition> initialPosition;
 
-  // to track if the google map has been initialized
-  bool isReady = false;
-
-  // to track if the dialog is shown or hidden
-  bool dialogIsHidden = true;
-
-  // To track current and past locations
-  List<LatLng> previousLocations = [];
-  double currentLong = 0;
-  double currentLat = 0;
-
+  // Controller
+  late final StateController controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = Completer<GoogleMapController>();
-    initialPosition = const CameraPosition(target: LatLng(0, 0));
+    _mapController = Completer<GoogleMapController>();
+    initialPosition = const CameraPosition(target: LatLng(0, 0)).obs;
+    controller = Get.put(StateController());
     setMapToMyLocation();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: !isReady
-          ? const Center(child: CircularProgressIndicator())
-          : SafeArea(
-            child: Stack(
-                children: [
-                  mapCard(),
-                  Positioned(
-                    bottom: 10,
-                    left: 75,
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width - 150,
-                      child: Column(
-                        children: [
-                          toRandomButton(),
-                          toMeButton(),
-                        ],
+      appBar: AppBar(),
+      body: Obx(
+        () => !controller.isReady.value
+            ? const Center(child: CircularProgressIndicator())
+            : SafeArea(
+                child: Stack(
+                  children: [
+                    mapCard(),
+                    Positioned(
+                      bottom: 10,
+                      left: 75,
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width - 150,
+                        child: Column(
+                          children: [
+                            toRandomButton(),
+                            toMeButton(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  if (!dialogIsHidden) ...[
-                    Positioned(
-                      left: 60,
-                      top: 100,
-                      child: greyBoxWidget(),
-                    ),
-                    Positioned(
-                      right: 80 - 50 + 10,
-                      top: 100 - 35 + 10,
-                      child: closeGreyBoxButton(),
-                    )
-                  ]
-                ],
+                    if (!controller.dialogIsHidden.value) ...[
+                      Positioned(
+                        left: 60,
+                        top: 100,
+                        child: greyBoxWidget(),
+                      ),
+                      Positioned(
+                        right: 80 - 50 + 10,
+                        top: 100 - 35 + 10,
+                        child: closeGreyBoxButton(),
+                      )
+                    ]
+                  ],
+                ),
               ),
-          ),
+      ),
     );
   }
 
   // Widgets
 
   Widget mapCard() {
-    return GoogleMap(
-      mapType: MapType.terrain,
-      initialCameraPosition: initialPosition,
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-      },
-      markers: {
-        Marker(
-          markerId: const MarkerId("object"),
-          icon: BitmapDescriptor.defaultMarker,
-          position: LatLng(currentLat, currentLong),
-        )
-      },
+    return Obx(
+      () => GoogleMap(
+        mapType: MapType.terrain,
+        initialCameraPosition: initialPosition.value,
+        onMapCreated: (GoogleMapController controller) {
+          _mapController.complete(controller);
+        },
+        markers: {
+          Marker(
+            markerId: const MarkerId("object"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: LatLng(controller.currentLat.value, controller.currentLong.value),
+          )
+        },
+      ),
     );
   }
 
@@ -186,13 +185,13 @@ class _MapPageState extends State<MapPage> {
             ),
           ),
           Text(
-            'Latitude :${currentLat.toStringAsFixed(0)}',
+            'Latitude :${controller.currentLat.value.toStringAsFixed(0)}',
             style: myStyle,
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: Text(
-              'Longitude :${currentLong.toStringAsFixed(0)}',
+              'Longitude :${controller.currentLong.value.toStringAsFixed(0)}',
               style: myStyle,
             ),
           ),
@@ -206,13 +205,13 @@ class _MapPageState extends State<MapPage> {
           ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: previousLocations.length >= 3 ? 3 : previousLocations.length,
+              itemCount: controller.previousLocations.length >= 3 ? 3 : controller.previousLocations.length,
               itemBuilder: (BuildContext context, int i) {
                 return Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                    'Lat :${previousLocations.reversed.toList()[i].latitude.toStringAsFixed(0)}, '
-                    'Long:${previousLocations.reversed.toList()[i].longitude.toStringAsFixed(0)}',
+                    'Lat :${controller.previousLocations.reversed.toList()[i].latitude.toStringAsFixed(0)}, '
+                    'Long:${controller.previousLocations.reversed.toList()[i].longitude.toStringAsFixed(0)}',
                     style: myStyle,
                     textAlign: TextAlign.center,
                   ),
@@ -237,7 +236,7 @@ class _MapPageState extends State<MapPage> {
           color: Colors.white,
           size: 35,
         ),
-        onPressed: () => setState(() => dialogIsHidden = true),
+        onPressed: () => controller.changeDialogIsHidden(true),
       ),
     );
   }
@@ -246,31 +245,32 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> setMapToMyLocation() async {
     final Position myLocation = await locate();
-    setState(() {
-      currentLat = myLocation.latitude;
-      currentLong = myLocation.longitude;
-      initialPosition = CameraPosition(
-        target: LatLng(myLocation.latitude, myLocation.longitude),
-        zoom: mapZoom,
-      );
-      isReady = true;
-    });
+
+    controller.changeLat(myLocation.latitude);
+    controller.changeLong(myLocation.longitude);
+
+    initialPosition.value = CameraPosition(
+      target: LatLng(myLocation.latitude, myLocation.longitude),
+      zoom: mapZoom,
+    );
+
+    controller.changeIsReady(true);
   }
 
   Future<void> toMe() async {
-    final GoogleMapController controller = await _controller.future;
+    final GoogleMapController mapController = await _mapController.future;
     final Position myLocation = await locate();
-    setState(() {
-      currentLat = myLocation.latitude;
-      currentLong = myLocation.longitude;
-      initialPosition = CameraPosition(
-        target: LatLng(myLocation.latitude, myLocation.longitude),
-        zoom: mapZoom,
-      );
-      dialogIsHidden = false;
-    });
+    controller.changeLat(myLocation.latitude);
+    controller.changeLong(myLocation.longitude);
 
-    controller.animateCamera(
+    initialPosition.value = CameraPosition(
+      target: LatLng(myLocation.latitude, myLocation.longitude),
+      zoom: mapZoom,
+    );
+
+    controller.changeDialogIsHidden(false);
+
+    mapController.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(myLocation.latitude, myLocation.longitude),
@@ -278,27 +278,28 @@ class _MapPageState extends State<MapPage> {
         ),
       ),
     );
-    previousLocations.add(LatLng(currentLat, currentLong));
+
+    controller.addLocation(LatLng(myLocation.latitude, myLocation.longitude));
   }
 
   Future<void> toRandom() async {
-    final GoogleMapController controller = await _controller.future;
+    final GoogleMapController mapController = await _mapController.future;
 
-    setState(() {
-      currentLat = randomLat;
-      currentLong = randomLong;
-    });
-    previousLocations.add(LatLng(currentLat, currentLong));
+    controller.changeLat(randomLat);
+    controller.changeLong(randomLong);
 
-    controller.animateCamera(
+    controller.addLocation(LatLng(controller.currentLat.value, controller.currentLong.value));
+
+    mapController.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
-          target: LatLng(currentLat, currentLong),
+          target: LatLng(controller.currentLat.value, controller.currentLong.value),
           zoom: mapZoom,
         ),
       ),
     );
-    dialogIsHidden = false;
+
+    controller.changeDialogIsHidden(false);
   }
 
   double get randomLat =>
